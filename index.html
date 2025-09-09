@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cosmic Seal Protocol (CSP) — Light + Saros (PHS)</title>
+  <style>
+    :root {
+      --bg:#0b0f14; --panel:#0f1520; --ink:#e8eef6; --muted:#a6b4c8;
+      --line:#1e2a39; --accent:#8bd4ff; --mint:#7ef0c0; --gold:#ffd27d;
+      --sans: Inter, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+      --max: 1080px;
+    }
+    html, body {background:var(--bg); color:var(--ink); margin:0; font-family:var(--sans);}
+    header {padding:56px 22px; border-bottom:1px solid var(--line);
+      background: radial-gradient(1200px 500px at 20% -30%, #0e1726 0, #0b0f14 50%);}
+    .wrap {max-width:var(--max); margin:0 auto;}
+    h1 {margin:0 0 6px; font-weight:900; letter-spacing:.2px;
+      background: linear-gradient(90deg, var(--accent), var(--mint));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;}
+    .subtitle {color:var(--muted);}
+    nav {display:flex; flex-wrap:wrap; gap:10px; margin-top:18px}
+    nav a {color:var(--ink); text-decoration:none; border:1px solid var(--line); padding:8px 12px; border-radius:10px}
+    nav a:hover {background:#131c29}
+    main {padding:40px 22px}
+    section {max-width:var(--max); margin:0 auto 48px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:26px}
+    h2 {margin:0 0 8px; font-weight:800}
+    h3 {margin:18px 0 6px; font-weight:700; color:var(--accent)}
+    p, li {line-height:1.65; color:#d5ddeb}
+    .grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px}
+    .kicker {color:var(--gold); font-weight:700; text-transform:uppercase; font-size:.8rem; letter-spacing:.3px}
+    .code {font-family:var(--mono); background:#0b111b; border:1px solid var(--line);
+      padding:14px; border-radius:10px; overflow:auto; font-size:.92rem; color:#e6f1ff}
+    footer {border-top:1px solid var(--line); padding:30px 22px; color:#a7b6c9}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Cosmic Seal Protocol (CSP)</h1>
+    <div class="subtitle">Light&nbsp;+&nbsp;Saros • Pre‑Hash Seal (PHS) • Minimal • Private • Verifiable</div>
+    <nav>
+      <a href="#summary">Executive Summary</a>
+      <a href="#phs">PHS Core</a>
+      <a href="#anchor">Light + Saros Anchors</a>
+      <a href="#rk">Retrograde (RK)</a>
+      <a href="#lex">Lex‑Seal</a>
+      <a href="#container">Verifiable Container</a>
+      <a href="#verify">Verify</a>
+      <a href="#examples">Examples</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <section id="summary">
+    <div class="kicker">Executive Summary</div>
+    <h2>Sealing in Light, not Land</h2>
+    <p>CSP binds an artifact to its <em>moment in light</em> (moon illumination &amp; optional tide) and its place in the Saros cycle with a single streaming cryptographic commitment. Geography is optional; privacy is the default. The human layer is a clean BangCheck; the machine layer is a compact <code>seal.json</code>.</p>
+  </section>
+  <section id="phs">
+    <div class="kicker">Normative</div>
+    <h2>Pre‑Hash Seal (PHS)</h2>
+    <div class="code">SEAL_FP = H(TAG || 0x00 || u64_le(|meta|) || meta_c14n || 0x1f || u64_le(|file|) || stream(file))<br>TAG = "CSP-PHS-v1"</div>
+    <p>Canonical header (sorted JSON, UTF‑8) excludes <code>seal_fp</code>. Default H=SHA‑384; BLAKE3 allowed when declared.</p>
+  </section>
+  <section id="anchor">
+    <div class="kicker">Normative</div>
+    <h2>Anchors: Light + Saros</h2>
+    <div class="code">"anchor": {"frame":"light","seed":["utc","moon_light","tide","saros"]}<br>
+"light_anchor": {"moon_illum":0.93,"tide_index":0.81}</div>
+    <p>Saros Edition supplies <code>phi_syn, phi_dra, phi_ano, phi_sar</code> and lattice counters; human tag e.g., <code>SE-413-057.121.099</code>.</p>
+  </section>
+  <section id="rk">
+    <div class="kicker">Optional</div>
+    <h2>Retrograde (RK)</h2>
+    <p><strong>rk.mode:"mean"</strong> — constant regression (no ephemeris). <strong>rk.mode:"true"</strong> — geocentric longitudes via offline ephemeris. An optional retrograde checksum records nodal:sun rate ratio over a window.</p>
+  </section>
+  <section id="lex">
+    <div class="kicker">Optional</div>
+    <h2>Lex‑Seal</h2>
+    <p>Canonicalise (NFC), tokenize (Unicode Word/Grapheme). Commit each token with its percent interval; Merkle to <code>lex.root</code> for word‑level proofs.</p>
+  </section>
+  <section id="container">
+    <div class="kicker">Optional</div>
+    <h2>VBL1 Container</h2>
+    <div class="code">'VBL1' || u32(header_len) || header_bytes || [u32 len][bytes][u32 crc] ...</div>
+  </section>
+  <section id="verify">
+    <div class="kicker">How‑To</div>
+    <h2>Verification (offline)</h2>
+    <ol>
+      <li>Recreate <code>meta_c14n</code> (exclude <code>seal_fp</code>).</li>
+      <li>Stream file; recompute <code>SEAL_FP</code>.</li>
+      <li>If <code>lex</code> present: verify token path(s) to <code>lex.root</code>.</li>
+      <li>Recompute <code>moon_illum</code> and Saros phases.</li>
+      <li>Optional ephemeris for RK_true; optional retrograde checksum window.</li>
+    </ol>
+  </section>
+  <section id="examples">
+    <div class="kicker">JSON</div>
+    <h2>Examples</h2>
+    <pre id="ex"></pre>
+  </section>
+</main>
+<footer><div class="wrap"><span>Updated 2025-09-09 23:30 UTC</span> — host this page at matthewlabarre.com</div></footer>
+<script>
+const ex = {
+  "mode":"PHS",
+  "seal_fp":{"alg":"sha-384","value":"<96hex>"},
+  "context":{"variant":"CSL-Min","t_in":"2025-09-08T16:18:00Z","t_out":"2025-09-08T16:18:00Z","duration_ms":0,"location":{"type":"logical","label":"Web Browser"}},
+  "anchor":{"frame":"light","seed":["utc","moon_light","tide","saros"]},
+  "light_anchor":{"moon_illum":0.93,"tide_index":0.81},
+  "saros_time":{"epoch_ref":"E2000","k_sar":413,"phi_sar":0.62,"phi_syn":0.93,"phi_dra":0.42,"phi_ano":0.17,"e_syn":57,"e_dra":121,"e_ano":99,"tag":"SE-413-057.121.099"}
+};
+document.getElementById('ex').textContent = JSON.stringify(ex,null,2);
+</script>
+</body></html>
